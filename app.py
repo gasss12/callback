@@ -23,7 +23,7 @@ TIME_SLOTS = [
 ]
 
 # Connessione MongoDB
-MONGO_URI = os.environ.get('mongodb+srv://<admin>:<admin123>@cluster0.mfgmbey.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+MONGO_URI = os.environ.get('MONGO_URI')
 if not MONGO_URI:
     logger.error("MONGO_URI non impostata. Terminare.")
     exit(1)
