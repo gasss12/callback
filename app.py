@@ -193,12 +193,18 @@ def get_available():
 def book_slot():
     try:
         data = request.get_json()
-        slot_id = data.get('slot_id')
+        time_slot = data.get('time_slot')  # ora prendo la stringa invece di slot_id
         user_name = data.get('user_name')
         user_email = data.get('user_email')
 
-        if slot_id is None or not user_name or not user_email:
-            return jsonify({'error': 'slot_id, user_name e user_email sono obbligatori'}), 400
+        if time_slot is None or not user_name or not user_email:
+            return jsonify({'error': 'time_slot, user_name e user_email sono obbligatori'}), 400
+
+        # Trovo l'indice corrispondente al time_slot
+        if time_slot not in TIME_SLOTS:
+            return jsonify({'error': 'time_slot non valido'}), 400
+
+        slot_id = TIME_SLOTS.index(time_slot)  # conversione stringa -> indice
 
         success, message = booking_service.book_slot(slot_id, user_name, user_email)
 
@@ -215,6 +221,7 @@ def book_slot():
     except Exception as e:
         logger.error(f"Errore book_slot: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/cancel', methods=['POST'])
 def cancel_booking():
