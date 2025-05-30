@@ -189,38 +189,42 @@ def get_available():
         logger.error(f"Errore get_available: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/book', methods=['POST'])
-def book_slot():
+@app.route('/convy-booking', methods=['POST'])
+def convy_booking():
     try:
         data = request.get_json()
-        time_slot = data.get('time_slot')  # ora prendo la stringa invece di slot_id
-        user_name = data.get('user_name')
-        user_email = data.get('user_email')
+        slot_scelto = data.get('slot_scelto')
+        user_name = data.get('user_name')      # se lo ricevi da Convy
+        user_email = data.get('user_email')    # idem
 
-        if time_slot is None or not user_name or not user_email:
-            return jsonify({'error': 'time_slot, user_name e user_email sono obbligatori'}), 400
+        if slot_scelto is None or not user_name or not user_email:
+            return jsonify({'error': 'slot_scelto, user_name e user_email sono obbligatori'}), 400
 
-        # Trovo l'indice corrispondente al time_slot
-        if time_slot not in TIME_SLOTS:
-            return jsonify({'error': 'time_slot non valido'}), 400
+        if slot_scelto not in TIME_SLOTS:
+            return jsonify({'error': 'slot_scelto non valido'}), 400
 
-        slot_id = TIME_SLOTS.index(time_slot)  # conversione stringa -> indice
+        slot_id = TIME_SLOTS.index(slot_scelto)
 
-        success, message = booking_service.book_slot(slot_id, user_name, user_email)
+        # Costruisci il documento MongoDB
+        booking_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        doc = {
+            "slot_id": slot_id,
+            "time_slot": slot_scelto,
+            "user_name": user_name,
+            "user_email": user_email,
+            "booking_date": booking_date,
+            "status": "booked"
+        }
 
-        if success:
-            return jsonify({
-                'status': 'success',
-                'message': message,
-                'slot_id': slot_id,
-                'time_slot': TIME_SLOTS[slot_id]
-            }), 200
-        else:
-            return jsonify({'status': 'error', 'message': message}), 400
+        # Salva in MongoDB
+        quixa_collection.insert_one(doc)
+
+        return jsonify({'status': 'success', 'message': 'Prenotazione salvata su MongoDB', 'booking': doc}), 200
 
     except Exception as e:
-        logger.error(f"Errore book_slot: {e}")
+        logger.error(f"Errore convy_booking: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/cancel', methods=['POST'])
