@@ -189,23 +189,69 @@ def get_available():
         logger.error(f"Errore get_available: {e}")
         return jsonify({'error': str(e)}), 500
 
+# SOSTITUISCI IL TUO ENDPOINT /convy-booking CON QUESTO:
+
 @app.route('/convy-booking', methods=['POST'])
 def convy_booking():
     try:
-        data = request.get_json()
+        # Log di tutto quello che arriva
+        logger.info("="*50)
+        logger.info("🔍 NUOVA RICHIESTA /convy-booking")
+        logger.info(f"📥 Headers ricevuti: {dict(request.headers)}")
+        logger.info(f"📥 Content-Type: {request.content_type}")
+        logger.info(f"📥 Method: {request.method}")
+        
+        # Prova a leggere i dati JSON
+        try:
+            data = request.get_json(force=True)  # force=True per sicurezza
+            logger.info(f"📦 Dati JSON ricevuti: {data}")
+            logger.info(f"📦 Tipo dati: {type(data)}")
+        except Exception as json_error:
+            logger.error(f"❌ Errore parsing JSON: {json_error}")
+            logger.info(f"📦 Raw data: {request.get_data()}")
+            return jsonify({'error': 'Dati JSON non validi', 'details': str(json_error)}), 400
+        
+        if not data:
+            logger.error("❌ Nessun dato ricevuto")
+            return jsonify({'error': 'Nessun dato ricevuto'}), 400
+            
+        # Estrai i parametri
         slot_scelto = data.get('slot_scelto')
-        user_name = data.get('user_name')      # se lo ricevi da Convy
-        user_email = data.get('user_email')    # idem
+        user_name = data.get('user_name')
+        user_email = data.get('user_email')
+        
+        logger.info(f"🎯 slot_scelto: '{slot_scelto}' (type: {type(slot_scelto)})")
+        logger.info(f"👤 user_name: '{user_name}' (type: {type(user_name)})")
+        logger.info(f"📧 user_email: '{user_email}' (type: {type(user_email)})")
 
-        if slot_scelto is None or not user_name or not user_email:
-            return jsonify({'error': 'slot_scelto, user_name e user_email sono obbligatori'}), 400
+        # Validazione rigorosa
+        if slot_scelto is None:
+            logger.error("❌ slot_scelto è None")
+            return jsonify({'error': 'slot_scelto è obbligatorio e non può essere None'}), 400
+            
+        if not user_name:
+            logger.error(f"❌ user_name vuoto o None: '{user_name}'")
+            return jsonify({'error': 'user_name è obbligatorio'}), 400
+            
+        if not user_email:
+            logger.error(f"❌ user_email vuoto o None: '{user_email}'")
+            return jsonify({'error': 'user_email è obbligatorio'}), 400
 
+        # Controlla se lo slot è valido
+        logger.info(f"🕐 TIME_SLOTS disponibili: {TIME_SLOTS}")
+        
         if slot_scelto not in TIME_SLOTS:
-            return jsonify({'error': 'slot_scelto non valido'}), 400
+            logger.error(f"❌ Slot non valido: '{slot_scelto}' non è in {TIME_SLOTS}")
+            return jsonify({
+                'error': 'slot_scelto non valido',
+                'slot_ricevuto': slot_scelto,
+                'slots_validi': TIME_SLOTS
+            }), 400
 
         slot_id = TIME_SLOTS.index(slot_scelto)
+        logger.info(f"✅ Slot ID trovato: {slot_id} per slot '{slot_scelto}'")
 
-        # Costruisci il documento MongoDB
+        # Costruisci documento MongoDB
         booking_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         doc = {
             "slot_id": slot_id,
@@ -213,16 +259,108 @@ def convy_booking():
             "user_name": user_name,
             "user_email": user_email,
             "booking_date": booking_date,
-            "status": "booked"
+            "status": "booked",
+            "source": "ConvyAI",
+            "raw_request": data  # Per debug
         }
+        
+        logger.info(f"📄 Documento da inserire in MongoDB: {doc}")
 
-        # Salva in MongoDB
-        quixa_collection.insert_one(doc)
+        # Test connessione MongoDB
+        try:
+            mongo_client.admin.command('ping')
+            logger.info("✅ MongoDB ping riuscito")
+            logger.info(f"🗄️ Database: {db.name}")
+            logger.info(f"📝 Collection: quixa_callback")
+        except Exception as ping_error:
+            logger.error(f"❌ MongoDB ping fallito: {ping_error}")
+            return jsonify({
+                'error': 'MongoDB non raggiungibile', 
+                'details': str(ping_error)
+            }), 500
 
-        return jsonify({'status': 'success', 'message': 'Prenotazione salvata su MongoDB', 'booking': doc}), 200
+        # Inserimento in MongoDB
+        try:
+            logger.info("💾 Inizio inserimento in MongoDB...")
+            result = quixa_collection.insert_one(doc)
+            mongo_id = str(result.inserted_id)
+            logger.info(f"✅ Documento inserito! MongoDB ID: {mongo_id}")
+            
+            # Verifica inserimento
+            verification = quixa_collection.find_one({"_id": result.inserted_id})
+            if verification:
+                logger.info("✅ Documento verificato correttamente in MongoDB")
+                # Rimuovi il campo raw_request dalla risposta
+                verification.pop('raw_request', None)
+                verification['_id'] = str(verification['_id'])
+            else:
+                logger.warning("⚠️ Documento non trovato dopo l'inserimento")
+                
+        except Exception as insert_error:
+            logger.error(f"❌ Errore inserimento MongoDB: {insert_error}")
+            logger.error(f"❌ Tipo errore: {type(insert_error)}")
+            return jsonify({
+                'error': 'Errore durante il salvataggio in MongoDB', 
+                'details': str(insert_error)
+            }), 500
+
+        # Conta totale documenti per debug
+        try:
+            total_count = quixa_collection.count_documents({})
+            logger.info(f"📊 Totale documenti nella collection: {total_count}")
+        except Exception as count_error:
+            logger.warning(f"⚠️ Errore conteggio documenti: {count_error}")
+
+        # Risposta di successo
+        response = {
+            'status': 'success', 
+            'message': '✅ Prenotazione salvata in MongoDB Atlas', 
+            'booking': {
+                'slot_id': slot_id,
+                'time_slot': slot_scelto,
+                'user_name': user_name,
+                'user_email': user_email,
+                'booking_date': booking_date
+            },
+            'mongodb_id': mongo_id,
+            'database': db.name,
+            'collection': 'quixa_callback'
+        }
+        
+        logger.info(f"✅ Risposta finale: {response}")
+        logger.info("="*50)
+        
+        return jsonify(response), 200
 
     except Exception as e:
-        logger.error(f"Errore convy_booking: {e}")
+        logger.error(f"❌ ERRORE GENERALE: {e}")
+        logger.error(f"❌ Tipo errore: {type(e)}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        
+        return jsonify({
+            'error': 'Errore interno del server', 
+            'details': str(e)
+        }), 500
+
+# ENDPOINT PER VEDERE TUTTE LE PRENOTAZIONI
+@app.route('/bookings', methods=['GET'])
+def get_all_bookings():
+    try:
+        # Da MongoDB
+        mongo_bookings = list(quixa_collection.find({}).sort("booking_date", -1))
+        for booking in mongo_bookings:
+            booking['_id'] = str(booking['_id'])
+            booking.pop('raw_request', None)  # Rimuovi dati di debug
+            
+        return jsonify({
+            'status': 'success',
+            'mongodb_count': len(mongo_bookings),
+            'bookings': mongo_bookings
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Errore get_all_bookings: {e}")
         return jsonify({'error': str(e)}), 500
 
 
