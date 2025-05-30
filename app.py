@@ -24,7 +24,7 @@ if not MONGO_URI:
     exit(1)
 
 mongo_client = MongoClient(MONGO_URI)
-db = mongo_client.get_database()
+db = mongo_client['quixa']
 quixa_collection = db.quixa_callback
 
 
