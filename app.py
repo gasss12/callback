@@ -381,8 +381,8 @@ def cancel_booking():
         
         user_email = data.get('user_email')
 
-        if user_email is None :
-            return jsonify({'error': ' user_email sono obbligatori'}), 400
+        if user_email is None:
+            return jsonify({'error': 'user_email è obbligatorio'}), 400
 
         success, message = booking_service.cancel_booking(user_email)
 
@@ -390,8 +390,6 @@ def cancel_booking():
             return jsonify({
                 'status': 'success',
                 'message': message,
-                
-                'time_slot': TIME_SLOTS[slot_id]
             }), 200
         else:
             return jsonify({'status': 'error', 'message': message}), 400
@@ -399,6 +397,7 @@ def cancel_booking():
     except Exception as e:
         logger.error(f"Errore cancel_booking: {e}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
