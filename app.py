@@ -132,30 +132,6 @@ class BookingService:
         rows = []
         booking_found = False
 
-        try:
-            with open(BOOKINGS_FILE, 'r', newline='', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    if int(row['slot_id']) == slot_id and row['user_email'] == user_email and row['status'] == 'booked':
-                        booking_found = True
-                        logger.info(f"Prenotazione cancellata: Slot {slot_id}, Email {user_email}")
-                    else:
-                        rows.append(row)
-        except FileNotFoundError:
-            return False, "Nessuna prenotazione trovata"
-
-        if not booking_found:
-            return False, "Prenotazione non trovata o email non corrispondente"
-
-        with open(BOOKINGS_FILE, 'w', newline='', encoding='utf-8') as file:
-            if rows:
-                fieldnames = rows[0].keys()
-                writer = csv.DictWriter(file, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(rows)
-            else:
-                writer = csv.writer(file)
-                writer.writerow(['slot_id', 'time_slot', 'user_name', 'user_email', 'booking_date', 'status'])
 
         try:
             result = quixa_collection.delete_one({"slot_id": slot_id, "user_email": user_email, "status": "booked"})
