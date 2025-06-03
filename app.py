@@ -374,6 +374,18 @@ def convy_booking():
             'error': 'Errore interno del server', 
             'details': str(e)
         }), 500
+        
+@app.route('/email-exists', methods=['GET'])
+def email_exists():
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'error': 'Parametro email mancante'}), 400
+    try:
+        exists = quixa_collection.find_one({'user_email': email, 'status': 'booked'}) is not None
+        return jsonify({'exists': exists}), 200
+    except Exception as e:
+        logger.error(f"Errore email_exists: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # ENDPOINT PER VEDERE TUTTE LE PRENOTAZIONI
 @app.route('/bookings', methods=['GET'])
