@@ -378,19 +378,19 @@ def get_all_bookings():
 def cancel_booking():
     try:
         data = request.get_json()
-        slot_id = data.get('slot_id')
+        
         user_email = data.get('user_email')
 
-        if slot_id is None or not user_email:
-            return jsonify({'error': 'slot_id e user_email sono obbligatori'}), 400
+        if user_emaill is None :
+            return jsonify({'error': ' user_email sono obbligatori'}), 400
 
-        success, message = booking_service.cancel_booking(slot_id, user_email)
+        success, message = booking_service.cancel_booking(user_email)
 
         if success:
             return jsonify({
                 'status': 'success',
                 'message': message,
-                'slot_id': slot_id,
+                
                 'time_slot': TIME_SLOTS[slot_id]
             }), 200
         else:
