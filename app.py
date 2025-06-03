@@ -125,7 +125,7 @@ class BookingService:
 
         return True, "Prenotazione confermata"
 
-   def cancel_booking(self, user_email):
+    def cancel_booking(self, user_email):
         try:
             result = quixa_collection.delete_many({"user_email": user_email, "status": "booked"})
             if result.deleted_count > 0:
@@ -137,6 +137,7 @@ class BookingService:
         except Exception as e:
             logger.error(f"Errore cancellazione MongoDB: {e}")
             return False, "Errore durante la cancellazione."
+
 
 booking_service = BookingService()
 
@@ -392,54 +393,6 @@ def cancel_booking():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({
-        'status': 'healthy',
-        'service': 'WSCallback Booking System',
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'available_slots': len(booking_service.get_available_slots())
-    }), 200
-
-@app.route('/', methods=['GET'])
-def home():
-    try:
-        available_slots = booking_service.get_available_slots()
-        return jsonify({
-            'service': 'WSCallback - Sistema Prenotazioni',
-            'available_slots': available_slots,
-            'time_slots': TIME_SLOTS,
-            'endpoints': {
-                'GET /slots': 'Visualizza tutti gli slot con stato',
-                'GET /available': 'Visualizza solo slot disponibili',
-                'POST /book': 'Prenota uno slot (slot_id, user_name, user_email)',
-                'POST /cancel': 'Cancella prenotazione (slot_id, user_email)',
-                'GET /health': 'Health check del servizio'
-            },
-            'example_booking': {
-                'url': '/book',
-                'method': 'POST',
-                'data': {
-                    'slot_id': 0,
-                    'user_name': 'Mario Rossi',
-                    'user_email': 'mario@email.com'
-                }
-            },
-            'example_cancel': {
-                'url': '/cancel',
-                'method': 'POST',
-                'data': {
-                    'slot_id': 0,
-                    'user_email': 'mario@email.com'
-                }
-            }
-        }), 200
-    except Exception as e:
-        logger.error(f"Errore nella home: {e}")
-        return jsonify({'error': str(e)}), 500
-
 if __name__ == '__main__':
-    print("=== WSCallback - Sistema Prenotazioni ===")
-    print("Slot disponibili:", TIME_SLOTS)
-    print(f"Server in avvio su porta {PORT}")
-    app.run(debug=False, host='0.0.0.0', port=PORT)
+    logger.info(f"Server Flask in ascolto sulla porta {PORT}...")
+    app.run(host='0.0.0.0', port=PORT)
