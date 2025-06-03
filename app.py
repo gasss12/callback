@@ -126,17 +126,17 @@ class BookingService:
         return True, "Prenotazione confermata"
 
    def cancel_booking(self, user_email):
-    try:
-        result = quixa_collection.delete_many({"user_email": user_email, "status": "booked"})
-        if result.deleted_count > 0:
-            logger.info(f"Prenotazioni rimosse da MongoDB per email {user_email}")
-            return True, f"{result.deleted_count} prenotazioni cancellate."
-        else:
-            logger.warning(f"Nessuna prenotazione trovata per email {user_email}")
-            return False, "Nessuna prenotazione trovata con questa email."
-    except Exception as e:
-        logger.error(f"Errore cancellazione MongoDB: {e}")
-        return False, "Errore durante la cancellazione."
+        try:
+            result = quixa_collection.delete_many({"user_email": user_email, "status": "booked"})
+            if result.deleted_count > 0:
+                logger.info(f"Prenotazioni rimosse da MongoDB per email {user_email}")
+                return True, f"{result.deleted_count} prenotazioni cancellate."
+            else:
+                logger.warning(f"Nessuna prenotazione trovata per email {user_email}")
+                return False, "Nessuna prenotazione trovata con questa email."
+        except Exception as e:
+            logger.error(f"Errore cancellazione MongoDB: {e}")
+            return False, "Errore durante la cancellazione."
 
 booking_service = BookingService()
 
