@@ -190,6 +190,29 @@ def get_available():
         return jsonify({'error': str(e)}), 500
 
 # SOSTITUISCI IL TUO ENDPOINT /convy-booking CON QUESTO:
+@app.route('/available-mongo', methods=['GET'])
+def get_available_from_mongo():
+    try:
+        # Recupera tutti gli slot prenotati in MongoDB
+        booked_slots_cursor = quixa_collection.find({"status": "booked"})
+        booked_slot_ids = {doc["slot_id"] for doc in booked_slots_cursor}
+
+        # Costruisci la lista degli slot ancora liberi
+        available_slots = [
+            {"slot_id": i, "time_slot": TIME_SLOTS[i]}
+            for i in range(len(TIME_SLOTS))
+            if i not in booked_slot_ids
+        ]
+
+        return jsonify({
+            'status': 'success',
+            'available_slots': available_slots,
+            'source': 'MongoDB'
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Errore in /available-mongo: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/convy-booking', methods=['POST'])
 def convy_booking():
