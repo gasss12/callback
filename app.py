@@ -13,9 +13,9 @@ BOOKINGS_FILE = 'prenotazioni.csv'
 PORT = int(os.environ.get('PORT', 5000))
 
 TIME_SLOTS = [
-    "09:00-10:00",
-    "10:00-11:00",
-    "11:00-12:00"
+    "10:00",
+    "11:00",
+    "12:00"
 ]
 
 MONGO_URI = os.environ.get('MONGO_URI')
