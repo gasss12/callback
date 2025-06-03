@@ -191,35 +191,24 @@ def get_available():
 
 # SOSTITUISCI IL TUO ENDPOINT /convy-booking CON QUESTO:
 @app.route('/available-mongo', methods=['GET'])
-def get_available_slots_mongo():
+def available_slots():
     try:
-        booked_docs = list(quixa_collection.find({"status": "booked"}))
-        booked_slot_ids = {doc['slot_id'] for doc in booked_docs if 'slot_id' in doc}
+        # Lista completa degli slot orari disponibili
+        all_slots = ["10:00", "11:00", "12:00"]
 
-        logger.info(f"Slot prenotati trovati in MongoDB: {booked_slot_ids}")
+        # Recupera i time_slot già prenotati dal DB (status = booked)
+        booked = quixa_collection.find(
+            {'status': 'booked'},
+            {'time_slot': 1, '_id': 0}
+        )
+        booked_slots = [b['time_slot'] for b in booked]
 
-        # Se nessuno slot è prenotato, restituiamo tutti
-        if not booked_slot_ids:
-            logger.info("Nessuna prenotazione trovata: restituisco tutti gli slot")
-            available_slots = [
-                {"slot_id": i, "time_slot": TIME_SLOTS[i]}
-                for i in range(len(TIME_SLOTS))
-            ]
-        else:
-            available_slots = [
-                {"slot_id": i, "time_slot": TIME_SLOTS[i]}
-                for i in range(len(TIME_SLOTS))
-                if i not in booked_slot_ids
-            ]
+        # Filtra solo gli slot ancora disponibili
+        available_slots = [slot for slot in all_slots if slot not in booked_slots]
 
-        return jsonify({
-            "status": "success",
-            "available_slots": available_slots,
-            "source": "MongoDB"
-        }), 200
+        return jsonify({'available_slots': available_slots}), 200
 
     except Exception as e:
-        logger.error(f"Errore in get_available_slots_mongo: {e}")
         return jsonify({'error': str(e)}), 500
 
 
