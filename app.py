@@ -381,7 +381,7 @@ def cancel_booking():
         
         user_email = data.get('user_email')
 
-        if user_emaill is None :
+        if user_email is None :
             return jsonify({'error': ' user_email sono obbligatori'}), 400
 
         success, message = booking_service.cancel_booking(user_email)
