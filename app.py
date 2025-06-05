@@ -88,7 +88,7 @@ class BookingService:
             pass
         return True
 
-    def book_slot(self, slot_id, user_name, user_email):
+    def book_slot(self, slot_id, user_name, phone_number):
         if slot_id < 0 or slot_id >= len(TIME_SLOTS):
             return False, "Slot ID non valido"
 
@@ -125,15 +125,15 @@ class BookingService:
 
         return True, "Prenotazione confermata"
 
-    def cancel_booking(self, user_email):
+    def cancel_booking(self, phone_number):
         try:
-            result = quixa_collection.delete_many({"user_email": user_email, "status": "booked"})
+            result = quixa_collection.delete_many({"phone_number": phone_number, "status": "booked"})
             if result.deleted_count > 0:
-                logger.info(f"Prenotazioni rimosse da MongoDB per email {user_email}")
+                logger.info(f"Prenotazioni rimosse da MongoDB per phone_number {phone_number}")
                 return True, f"{result.deleted_count} prenotazioni cancellate."
             else:
-                logger.warning(f"Nessuna prenotazione trovata per email {user_email}")
-                return False, "Nessuna prenotazione trovata con questa email."
+                logger.warning(f"Nessuna prenotazione trovata per phone_number {phone_number}")
+                return False, "Nessuna prenotazione trovata con questo phone_number."
         except Exception as e:
             logger.error(f"Errore cancellazione MongoDB: {e}")
             return False, "Errore durante la cancellazione."
@@ -224,7 +224,7 @@ def convy_booking():
             logger.error(f"❌ user_name vuoto o None: '{user_name}'")
             return jsonify({'error': 'user_name è obbligatorio'}), 400
             
-        if not user_email:
+        if not phone_number:
             logger.error(f"❌ phone_number vuoto o None: '{phone_number}'")
             return jsonify({'error': 'phone_number è obbligatorio'}), 400
 
@@ -375,10 +375,10 @@ def cancel_booking():
         
         phone_number = data.get('phone_number')
 
-        if user_email is None:
+        if phone_number is None:
             return jsonify({'error': 'phone_number è obbligatorio'}), 400
 
-        success, message = booking_service.cancel_booking(user_email)
+        success, message = booking_service.cancel_booking(phone_number)
 
         if success:
             return jsonify({
