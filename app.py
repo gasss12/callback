@@ -337,7 +337,7 @@ def convy_booking():
 @app.route('/phone-exists', methods=['GET'])
 def email_exists():
     phone = request.args.get('phone')
-    if not email:
+    if not phone_number:
         return jsonify({'error': 'Parametro phone mancante'}), 400
     try:
         exists = quixa_collection.find_one({'phone_number': phone_number, 'status': 'booked'}) is not None
