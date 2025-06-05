@@ -36,7 +36,7 @@ class BookingService:
         if not os.path.exists(BOOKINGS_FILE):
             with open(BOOKINGS_FILE, 'w', newline='', encoding='utf-8') as file:
                 writer = csv.writer(file)
-                writer.writerow(['slot_id', 'time_slot', 'user_name', 'user_email', 'booking_date', 'status'])
+                writer.writerow(['slot_id', 'time_slot', 'user_name', 'phone_number', 'booking_date', 'status'])
             logger.info("File CSV creato con intestazioni.")
 
     def get_available_slots(self):
@@ -63,7 +63,7 @@ class BookingService:
                     if row['status'] == 'booked':
                         booked_slots[int(row['slot_id'])] = {
                             'user_name': row['user_name'],
-                            'user_email': row['user_email'],
+                            'phone_number': row['phone_number'],
                             'booking_date': row['booking_date']
                         }
         except FileNotFoundError:
@@ -103,7 +103,7 @@ class BookingService:
                 slot_id,
                 TIME_SLOTS[slot_id],
                 user_name,
-                user_email,
+                phone_number,
                 booking_date,
                 'booked'
             ])
@@ -114,7 +114,7 @@ class BookingService:
                 "slot_id": slot_id,
                 "time_slot": TIME_SLOTS[slot_id],
                 "user_name": user_name,
-                "user_email": user_email,
+                "phone_number": phone_number,
                 "booking_date": booking_date,
                 "status": "booked"
             }
@@ -209,11 +209,11 @@ def convy_booking():
         # Estrai i parametri
         slot_scelto = data.get('slot_scelto')
         user_name = data.get('user_name')
-        user_email = data.get('user_email')
+        phone_number = data.get('phone_number')
         
         logger.info(f"🎯 slot_scelto: '{slot_scelto}' (type: {type(slot_scelto)})")
         logger.info(f"👤 user_name: '{user_name}' (type: {type(user_name)})")
-        logger.info(f"📧 user_email: '{user_email}' (type: {type(user_email)})")
+        logger.info(f"📧 phone_number: '{user_email}' (type: {type(phone_number)})")
 
         # Validazione rigorosa
         if slot_scelto is None:
@@ -225,8 +225,8 @@ def convy_booking():
             return jsonify({'error': 'user_name è obbligatorio'}), 400
             
         if not user_email:
-            logger.error(f"❌ user_email vuoto o None: '{user_email}'")
-            return jsonify({'error': 'user_email è obbligatorio'}), 400
+            logger.error(f"❌ phone_number vuoto o None: '{phone_number}'")
+            return jsonify({'error': 'phone_number è obbligatorio'}), 400
 
         # Controlla se lo slot è valido
         logger.info(f"🕐 TIME_SLOTS disponibili: {TIME_SLOTS}")
@@ -248,7 +248,7 @@ def convy_booking():
             "slot_id": slot_id,
             "time_slot": slot_scelto,
             "user_name": user_name,
-            "user_email": user_email,
+            "phone_number": phone_number,
             "booking_date": booking_date,
             "status": "booked",
             "source": "ConvyAI",
@@ -310,7 +310,7 @@ def convy_booking():
                 'slot_id': slot_id,
                 'time_slot': slot_scelto,
                 'user_name': user_name,
-                'user_email': user_email,
+                'phone_number': phone_number,
                 'booking_date': booking_date
             },
             'mongodb_id': mongo_id,
@@ -334,16 +334,16 @@ def convy_booking():
             'details': str(e)
         }), 500
         
-@app.route('/email-exists', methods=['GET'])
+@app.route('/phone-exists', methods=['GET'])
 def email_exists():
-    email = request.args.get('email')
+    phone = request.args.get('phone')
     if not email:
-        return jsonify({'error': 'Parametro email mancante'}), 400
+        return jsonify({'error': 'Parametro phone mancante'}), 400
     try:
-        exists = quixa_collection.find_one({'user_email': email, 'status': 'booked'}) is not None
+        exists = quixa_collection.find_one({'phone_number': phone_number, 'status': 'booked'}) is not None
         return jsonify({'exists': exists}), 200
     except Exception as e:
-        logger.error(f"Errore email_exists: {e}")
+        logger.error(f"Errore phone_exists: {e}")
         return jsonify({'error': str(e)}), 500
 
 # ENDPOINT PER VEDERE TUTTE LE PRENOTAZIONI
@@ -373,10 +373,10 @@ def cancel_booking():
     try:
         data = request.get_json()
         
-        user_email = data.get('user_email')
+        phone_number = data.get('phone_number')
 
         if user_email is None:
-            return jsonify({'error': 'user_email è obbligatorio'}), 400
+            return jsonify({'error': 'phone_number è obbligatorio'}), 400
 
         success, message = booking_service.cancel_booking(user_email)
 
