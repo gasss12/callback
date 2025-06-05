@@ -213,7 +213,7 @@ def convy_booking():
         
         logger.info(f"🎯 slot_scelto: '{slot_scelto}' (type: {type(slot_scelto)})")
         logger.info(f"👤 user_name: '{user_name}' (type: {type(user_name)})")
-        logger.info(f"📧 phone_number: '{user_email}' (type: {type(phone_number)})")
+        logger.info(f"📧 phone_number: '{phone_number}' (type: {type(phone_number)})")
 
         # Validazione rigorosa
         if slot_scelto is None:
