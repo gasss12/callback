@@ -339,7 +339,7 @@ def phone_exists():
     exists = check_phone_in_db(phone_number)
     return jsonify({"exists": exists})
 
-
+ 
 # ENDPOINT PER VEDERE TUTTE LE PRENOTAZIONI
 @app.route('/bookings', methods=['GET'])
 def get_all_bookings():
