@@ -335,15 +335,9 @@ def convy_booking():
         }), 500
 @app.route('/phone-exists', methods=['GET'])        
 def phone_exists():
-    try:
-        result = quixa_collection.find_one({
-            'phone_number': phone_number,
-            'status': 'booked'
-        })
-        return result is not None
-    except Exception as e:
-        logger.error(f"Errore nella verifica del numero di telefono: {e}")
-        return False
+    phone_number = request.args.get('phone_number')
+    exists = check_phone_in_db(phone_number)
+    return jsonify({"exists": exists})
 
 
 # ENDPOINT PER VEDERE TUTTE LE PRENOTAZIONI
