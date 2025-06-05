@@ -333,11 +333,18 @@ def convy_booking():
             'error': 'Errore interno del server', 
             'details': str(e)
         }), 500
-@app.route('/phone-exists', methods=['GET'])        
+@app.route('/phone-exists', methods=['GET'])
 def phone_exists():
     phone_number = request.args.get('phone_number')
-    exists = check_phone_in_db(phone_number)
-    return jsonify({"exists": exists})
+    if not email:
+        return jsonify({'error': 'Parametro phone_number mancante'}), 400
+    try:
+        exists = quixa_collection.find_one({'phone_number': phone_number, 'status': 'booked'}) is not None
+        return jsonify({'exists': exists}), 200
+    except Exception as e:
+        logger.error(f"Errore phone_exists: {e}")
+        return jsonify({'error': str(e)}), 5000
+
 
  
 # ENDPOINT PER VEDERE TUTTE LE PRENOTAZIONI
