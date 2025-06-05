@@ -334,14 +334,18 @@ def convy_booking():
             'details': str(e)
         }), 500
 @app.route('/phone-exists', methods=['GET'])
-def phone_exists(self, phone_number):
+def phone_exists():
+    phone = request.args.get('phone')
+    
+    if not phone:
+        return jsonify({'error': 'Parametro phone mancante'}), 400
+    
     try:
-        result = quixa_collection.find_one({'phone_number': phone_number})
-        return result is not None
+        exists = quixa_collection.find_one({'phone_number': phone}) is not None
+        return jsonify({'exists': exists}), 200
     except Exception as e:
-        logger.error(f"Errore durante la verifica del numero di telefono: {e}")
-        return False
-
+        logger.error(f"Errore phone_exists: {e}")
+        return jsonify({'error': str(e)}), 500
 
  
 # ENDPOINT PER VEDERE TUTTE LE PRENOTAZIONI
