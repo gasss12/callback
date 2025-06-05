@@ -334,7 +334,7 @@ def convy_booking():
             'details': str(e)
         }), 500
 @app.route('/phone-exists', methods=['GET'])        
-def phone_exists(self, phone_number):
+def phone_exists():
     try:
         result = quixa_collection.find_one({
             'phone_number': phone_number,
