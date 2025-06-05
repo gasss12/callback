@@ -333,7 +333,7 @@ def convy_booking():
             'error': 'Errore interno del server', 
             'details': str(e)
         }), 500
-        
+@app.route('/phone-exists', methods=['GET'])        
 def phone_exists(self, phone_number):
     try:
         result = quixa_collection.find_one({
