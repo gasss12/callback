@@ -336,7 +336,7 @@ def convy_booking():
         
 @app.route('/phone-exists', methods=['GET'])
 def email_exists():
-    phone = request.args.get('phone')
+    phone_number = request.args.get('phone_number')
     if not phone_number:
         return jsonify({'error': 'Parametro phone mancante'}), 400
     try:
